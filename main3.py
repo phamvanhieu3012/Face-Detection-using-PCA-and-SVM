@@ -134,8 +134,7 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 # Prediction of user based on the model
 
 # test = []
-# #testImage = "test/Tiger_Woods_0010.jpg"
-# testImage = "bo.png"
+# testImage = "test/anhtest.jpg"
 # face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 #
 # testImage=cv2.imread(testImage)[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
@@ -150,7 +149,7 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 #
 # ## Xuat anh
 #
-# testImage3 = cv2.imread("bo.png")
+# testImage3 = cv2.imread("test/anhtest.jpg")
 # testImage2 =cv2.resize(testImage3, (400, 600))
 # gray = cv2.cvtColor(testImage2, cv2.COLOR_BGR2GRAY)
 # faces = face_cascade.detectMultiScale(gray, 1.1, 4)
@@ -219,7 +218,7 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
 ## 9 input video
 
-cap = cv2.VideoCapture("avil.mp4")
+cap = cv2.VideoCapture("test/avil.mp4")
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 cap.set(3,640)
