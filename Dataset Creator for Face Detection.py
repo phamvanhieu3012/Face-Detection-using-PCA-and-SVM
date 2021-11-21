@@ -1,10 +1,17 @@
+import os
+
 import cv2
 import numpy as numpy
 
 faceDetect = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 cam = cv2.VideoCapture(0)
 
+
+id = input('Nhập tên mẫu : ')
 sampleNum = 0
+
+if not os.path.exists('dataset/' + str(id)):
+    os.mkdir('dataset/' + str(id))
 
 while True:
     ret,img = cam.read()
@@ -12,13 +19,13 @@ while True:
     faces = faceDetect.detectMultiScale(gray, 1.3, 5);
     for (x,y,w,h) in faces:
         sampleNum = sampleNum + 1
-        cv2.imwrite("dataset/Hieu/Hieu" + str(sampleNum) + ".jpg", gray[y:y+h,x:x+w])
+        cv2.imwrite("dataset/" + str(id)+"/"+str(id) + str(sampleNum) + ".jpg", gray[y:y+h,x:x+w])
         cv2.rectangle(img, (x,y), (x+w, y+h), (0,0,255), 2)
         cv2.waitKey(100)
         pass
     cv2.imshow("Faces",img)
     cv2.waitKey(1)
-    if sampleNum>100:
+    if sampleNum>300:
         break
     pass
 cam.release()
