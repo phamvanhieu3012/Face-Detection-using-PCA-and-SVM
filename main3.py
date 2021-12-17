@@ -1,3 +1,4 @@
+import pickle
 from time import time
 import numpy, os
 from sklearn.metrics import classification_report
@@ -67,6 +68,9 @@ print("Extracting the top %d eigenfaces from %d faces"
       % (n_components, len(X_train)))
 t0 = time()
 pca = PCA(n_components=n_components, whiten=True).fit(X_train)
+
+print(PCA(n_components=n_components, whiten=True).fit(X_train))
+
 print("done in %0.3fs" % (time() - t0))
 
 eigenfaces = pca.components_.reshape((n_components, h, w))
@@ -79,22 +83,22 @@ X_test_pca = pca.transform(X_test)
 print("done in %0.3fs" % (time() - t0))
 
 ##4 Show 7 ảnh sau PCA
-import matplotlib.pyplot as plt
-
-def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
-    """Helper function to plot a gallery of portraits"""
-    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
-    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
-    for i in range(n_components):
-        plt.subplot(n_row, n_col, i + 1)
-        plt.imshow(images[i], cmap=plt.cm.gray)
-        plt.title(titles[i], size=12)
-        plt.xticks(())
-    plt.show()
-
-
-eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
-plot_gallery(eigenfaces, eigenface_titles, h, w)
+# import matplotlib.pyplot as plt
+#
+# def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
+#     """Helper function to plot a gallery of portraits"""
+#     plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+#     plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+#     for i in range(7):
+#         plt.subplot(n_row, n_col, i + 1)
+#         plt.imshow(images[i], cmap=plt.cm.gray)
+#         plt.title(titles[i], size=12)
+#         plt.xticks(())
+#     plt.show()
+#
+#
+# eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
+# plot_gallery(eigenfaces, eigenface_titles, h, w)
 
 ##5
 
@@ -108,7 +112,7 @@ param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
 clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid, verbose=5)
 clf = clf.fit(X_train_pca, y_train)
 print("done in %0.3fs" % (time() - t0))
-
+print('Best score:', clf.best_score_)
 print("\n")
 print("Best estimator found by grid search : ")
 print(clf.best_estimator_)
@@ -128,13 +132,30 @@ print(classification_report(y_test, y_pred, target_names=target_names))
 print("\nConfusion Matrix : ")
 print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
+from sklearn import metrics
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
+
+# save the model to disk
+filename = 'finalized_model.sav'
+pickle.dump(clf, open(filename, 'wb'))
+
+# some time later...
+
+# load the model from disk
+loaded_model = pickle.load(open(filename, 'rb'))
+# result = loaded_model.score(X_test, y_test)
+
+print(loaded_model)
+
 ##6 Test
 
 ###############################################################################
 # Prediction of user based on the model
 
 # test = []
-# testImage = "test/anhtest.jpg"
+# testImage = "test/selena.jpg"
 # face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 #
 # testImage=cv2.imread(testImage)[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
@@ -142,15 +163,15 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 # testImage=cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
 # testImageFeatureVector=numpy.array(testImage).flatten()
 # test.append(testImageFeatureVector)
-# testImagePCA = pca.transform(test)
+# testImagePCA = pca.transform(test) 	# Apply dimensionality reduction to test.
 # testImagePredict=clf.predict(testImagePCA)
 #
 # print ("Predicted Name : " + target_names[testImagePredict[0]])
 #
 # ## Xuat anh
 #
-# testImage3 = cv2.imread("test/anhtest.jpg")
-# testImage2 =cv2.resize(testImage3, (400, 600))
+# testImage3 = cv2.imread("test/selena.jpg")
+# testImage2 =cv2.resize(testImage3, (400,250))
 # gray = cv2.cvtColor(testImage2, cv2.COLOR_BGR2GRAY)
 # faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 # for (x, y, w, h) in faces:
@@ -159,110 +180,129 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 #                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 # cv2.imshow('img', testImage2)
 # cv2.waitKey()
-# print('Accuracy: '+clf.score(testImagePCA, target_names))
+#print('Accuracy: '+clf.score(testImagePCA, target_names))
+
+print(target_names)
+
+path_testdata = "test2/"
+for file in os.listdir(path_testdata):
+    test = []
+
+    filename = path_testdata + file
+    testImage = cv2.imread(filename)[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
+    testImage = cv2.resize(testImage, (w, h))
+    testImage = cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
+    testImageFeatureVector = numpy.array(testImage).flatten()
+
+    test.append(testImageFeatureVector)
+    testImagePCA = pca.transform(test)
+    testImagePredict = loaded_model.predict(testImagePCA)
+
+    print("File Source : " + filename)
+    print("Predicted Name : " + target_names[testImagePredict[0]] + "\n")
 
 ##8 Mở cam test
 
-# import numpy as np
-# import cv2
-#
-# cap = cv2.VideoCapture(0)
-# face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-#
-# cap.set(3,640)
-# cap.set(4,480)
-#
-# while(True):
-    # Capture frame-by-frame
-#     test = []
-#     face = []
-#     ret, frame = cap.read()
-#     xv, yv, cv = frame.shape
-#     if ret == True :
-#         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-#
-#         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-#         for (x, y, wf, hf) in faces:
-#             cy, cx = y + (hf // 2), x + (wf // 2)
-#             max_len = max(max(hf // 2, wf // 2), 125)
-#
-#             if (x - max_len) <= 0 or (x + max_len) >= xv or (y - max_len) <= 0 or (y + max_len) >= yv:
-#                 continue
-#             face_crop = (frame[cy - max_len:cy + max_len, cx - max_len:cx + max_len])
-#             face_crop = face_crop[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
-#
-#             testImage = cv2.resize(face_crop, (w, h))
-#             cv2.imshow('face', testImage)
-#
-#             testImage = cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
-#             testImageFeatureVector = numpy.array(testImage).flatten()
-#             test.append(testImageFeatureVector)
-#             testImagePCA = pca.transform(test)
-#             testImagePredict = clf.predict(testImagePCA)
-#
-#             # create box on detected face
-#             frame = cv2.rectangle(frame, (x, y), (x + wf, y + hf), (255, 0, 0), 1)
-#             frame = cv2.rectangle(frame, (x, y + hf), (x + wf, y + hf + 30), (255, 0, 0), -1)
-#             # print label name on image
-#             cv2.putText(frame, "Name : " + target_names[testImagePredict[0]], (x + x // 10, y + hf + 20), \
-#                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-#
-#         cv2.imshow('frame', frame)
-#
-#         if cv2.waitKey(1) & 0xFF == ord('q'):
-#             break
-#
-# # When everything done, release the capture
-# cap.release()
-# cv2.destroyAllWindows()
+import numpy as np
+import cv2
 
-## 9 input video
-
-cap = cv2.VideoCapture("test/avil.mp4")
+cap = cv2.VideoCapture(0)
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 cap.set(3,640)
 cap.set(4,480)
 
-while cap.isOpened():
+while(True):
     # Capture frame-by-frame
     test = []
     face = []
-    _, frame = cap.read()
+    ret, frame = cap.read()
     xv, yv, cv = frame.shape
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    if ret == True :
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    for (x, y, wf, hf) in faces:
-        cy, cx = y + (hf // 2), x + (wf // 2)
-        max_len = max(max(hf // 2, wf // 2), 125)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        for (x, y, wf, hf) in faces:
+            cy, cx = y + (hf // 2), x + (wf // 2)
+            max_len = max(max(hf // 2, wf // 2), 125)
 
-        if (x - max_len) <= 0 or (x + max_len) >= xv or (y - max_len) <= 0 or (y + max_len) >= yv:
-            continue
-        face_crop = (frame[cy - max_len:cy + max_len, cx - max_len:cx + max_len])
-        face_crop = face_crop[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
+            if (x - max_len) <= 0 or (x + max_len) >= xv or (y - max_len) <= 0 or (y + max_len) >= yv:
+                continue
+            face_crop = (frame[cy - max_len:cy + max_len, cx - max_len:cx + max_len])
+            face_crop = face_crop[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
 
-        testImage = cv2.resize(face_crop, (w, h))
-        cv2.imshow('face', testImage)
+            testImage = cv2.resize(face_crop, (w, h))
+            cv2.imshow('face', testImage)
 
-        testImage = cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
-        testImageFeatureVector = numpy.array(testImage).flatten()
-        test.append(testImageFeatureVector)
-        testImagePCA = pca.transform(test)
-        testImagePredict = clf.predict(testImagePCA)
+            testImage = cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
+            testImageFeatureVector = numpy.array(testImage).flatten()
+            test.append(testImageFeatureVector)
+            testImagePCA = pca.transform(test)
+            testImagePredict = clf.predict(testImagePCA)
 
-        # create box on detected face
-        frame = cv2.rectangle(frame, (x, y), (x + wf, y + hf), (255, 0, 0), 1)
-        frame = cv2.rectangle(frame, (x, y + hf), (x + wf, y + hf + 30), (255, 0, 0), -1)
-        # print label name on image
-        cv2.putText(frame, "Name : " + target_names[testImagePredict[0]], (x + x // 10, y + hf + 20), \
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+            # create box on detected face
+            frame = cv2.rectangle(frame, (x, y), (x + wf, y + hf), (255, 0, 0), 1)
+            frame = cv2.rectangle(frame, (x, y + hf), (x + wf, y + hf + 30), (255, 0, 0), -1)
+            # print label name on image
+            cv2.putText(frame, "Name : " + target_names[testImagePredict[0]], (x + x // 10, y + hf + 20), \
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 
-    cv2.imshow('frame', frame)
+        cv2.imshow('frame', frame)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 # When everything done, release the capture
 cap.release()
 cv2.destroyAllWindows()
+
+## 9 input video
+
+# cap = cv2.VideoCapture("test/avil.mp4")
+# face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+#
+# cap.set(3,640)
+# cap.set(4,480)
+#
+# while cap.isOpened():
+#     # Capture frame-by-frame
+#     test = []
+#     face = []
+#     _, frame = cap.read()
+#     xv, yv, cv = frame.shape
+#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#
+#     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+#     for (x, y, wf, hf) in faces:
+#         cy, cx = y + (hf // 2), x + (wf // 2)
+#         max_len = max(max(hf // 2, wf // 2), 125)
+#
+#         if (x - max_len) <= 0 or (x + max_len) >= xv or (y - max_len) <= 0 or (y + max_len) >= yv:
+#             continue
+#         face_crop = (frame[cy - max_len:cy + max_len, cx - max_len:cx + max_len])
+#         face_crop = face_crop[data_slice[0]:data_slice[1], data_slice[2]:data_slice[3]]
+#
+#         testImage = cv2.resize(face_crop, (w, h))
+#         cv2.imshow('face', testImage)
+#
+#         testImage = cv2.cvtColor(testImage, cv2.COLOR_BGR2GRAY)
+#         testImageFeatureVector = numpy.array(testImage).flatten()
+#         test.append(testImageFeatureVector)
+#         testImagePCA = pca.transform(test)
+#         testImagePredict = clf.predict(testImagePCA)
+#
+#         # create box on detected face
+#         frame = cv2.rectangle(frame, (x, y), (x + wf, y + hf), (255, 0, 0), 1)
+#         frame = cv2.rectangle(frame, (x, y + hf), (x + wf, y + hf + 30), (255, 0, 0), -1)
+#         # print label name on image
+#         cv2.putText(frame, "Name : " + target_names[testImagePredict[0]], (x + x // 10, y + hf + 20), \
+#                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+#
+#     cv2.imshow('frame', frame)
+#
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+#
+# # When everything done, release the capture
+# cap.release()
+# cv2.destroyAllWindows()
