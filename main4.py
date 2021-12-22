@@ -73,9 +73,10 @@ with open('models/dataNames.pickle', 'rb') as f:
     target_names = pickle.load(f)
 
 
-with open('models/pca.pickle', 'rb') as f:
-    pca = pickle.load(f)
+# with open('models/pca.pickle', 'rb') as f:
+#     pca = pickle.load(f)
 
+pca = PCA(n_components=242, whiten=True).fit(X)
 
 filename = 'finalized_model.sav'
 loaded_model = pickle.load(open(filename, 'rb'))
@@ -84,7 +85,7 @@ loaded_model = pickle.load(open(filename, 'rb'))
 # Prediction of user based on the model
 
 
-# # Xuat anh
+# Xuat anh
 #
 # testImage3 = cv2.imread("test/selena.jpg")
 # testImage2 =cv2.resize(testImage3, (200, 300))
