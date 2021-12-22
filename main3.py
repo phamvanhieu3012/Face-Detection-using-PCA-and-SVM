@@ -14,8 +14,12 @@ path="dataset/"
 
 data_slice = [70,195,78,172] # [ ymin, ymax, xmin, xmax]
 resize_ratio = 2.5
-h = int((data_slice[1] - data_slice[0])/resize_ratio) #ymax - ymin slice, Height of image in float
-w = int((data_slice[3] - data_slice[2])/resize_ratio) #xmax - xmin slice, Width of image in float
+# h = int((data_slice[1] - data_slice[0])/resize_ratio) #ymax - ymin slice, Height of image in float
+# w = int((data_slice[3] - data_slice[2])/resize_ratio) #xmax - xmin slice, Width of image in float
+
+h = 50
+w = 50
+
 print("Image dimension after resize (h,w) :", h, w)
 
 n_sample = 0 #Initial sample count
@@ -28,6 +32,7 @@ n_components = 7
 ##2
 
 #Flat image Feature Vector
+X=[]
 X=[]
 #Int array of Label Vector
 Y=[]
@@ -50,6 +55,17 @@ print("Samples :", n_sample)
 print("Class :", target_names)
 n_classes = len(target_names)
 
+# Ghi data
+pick_in = open('models/dataX.pickle','wb') #Write file
+pickle.dump(X, pick_in)
+pick_in.close()
+
+with open('models/dataY.pickle', 'wb') as f: #Write file
+    pickle.dump(Y, f)
+
+with open('models/dataNames.pickle', 'wb') as f:
+    pickle.dump(target_names, f)
+
 ##3 PCA
 
 ###############################################################################
@@ -68,6 +84,9 @@ print("Extracting the top %d eigenfaces from %d faces"
       % (n_components, len(X_train)))
 t0 = time()
 pca = PCA(n_components=n_components, whiten=True).fit(X_train)
+
+with open('models/pca.pickle', 'wb') as f:
+    pickle.dump(pca, f)
 
 print(PCA(n_components=n_components, whiten=True).fit(X_train))
 
@@ -127,7 +146,7 @@ print(clf.score(X_test_pca,y_test))
 print("done in %0.3fs" % (time() - t0))
 
 print("\nClassification Report : ")
-print(classification_report(y_test, y_pred, target_names=target_names))
+# print(classification_report(y_test, y_pred, target_names=target_names))
 
 print("\nConfusion Matrix : ")
 print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))

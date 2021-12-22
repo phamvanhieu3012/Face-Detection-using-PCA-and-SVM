@@ -25,7 +25,7 @@ while True:
         pass
     cv2.imshow("Faces",img)
     cv2.waitKey(1)
-    if sampleNum>300:
+    if sampleNum>200:
         break
     pass
 cam.release()
